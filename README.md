@@ -8,3 +8,4 @@ Go言語で作るインタプリタ 実装
 - statement を増やす (p30 ~)
   - 今は let と return のみ
 - if を statement でなく expression にしてみる
+- ++ や -- のように、前置も後置もできる演算子を定義してみる (p83)
