@@ -7,5 +7,7 @@ Go言語で作るインタプリタ 実装
 - トップダウン式構文解析とボトムアップ構文解析との違いを理解 (p30)
 - statement を増やす (p30 ~)
   - 今は let と return のみ
-- if を statement でなく expression にしてみる
+- if を statement でなく expression にしてみる (p93)
 - ++ や -- のように、前置も後置もできる演算子を定義してみる (p83)
+- switch expression の実装 
+- ast とか parser function とか一か所に固まりすぎて見ずらいのでいい感じにファイル分けを検討する
