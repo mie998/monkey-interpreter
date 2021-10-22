@@ -16,6 +16,11 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"10", 10},
 		{"-5", -5},
 		{"-10", -10},
+		{"1 + 1 * 1", 2},
+		{"1 - 1 + 1", 1},
+		{"1 + 3 / 1", 4},
+		{"(1 + 1) / 2 + 3", 4},
+		{"1 + 4 / 2 - 1", 2},
 	}
 
 	for _, tt := range tests {
@@ -53,6 +58,18 @@ func TestEvalBooleanExpression(t *testing.T) {
 	}{
 		{"true", true},
 		{"false", false},
+		{"1 > 2", false},
+		{"2 > 1", true},
+		{"1 < 2", true},
+		{"2 < 1", false},
+		{"1 == 1", true},
+		{"1 == 2", false},
+		{"1 != 2", true},
+		{"1 != 2", true},
+		{"true == true", true},
+		{"false == false", true},
+		{"true == false", false},
+		{"true != false", true},
 	}
 
 	for _, tt := range tests {
