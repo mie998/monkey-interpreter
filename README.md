@@ -9,6 +9,7 @@ Go言語で作るインタプリタ 実装
   - 今は let と return のみ
 - if を statement でなく expression にしてみる (p93)
 - ++ や -- のように、前置も後置もできる演算子を定義してみる (p83)
+  - 後置と前置だと何が変わるのか？
 - switch expression の実装 
 - ast とか parser function とか一か所に固まりすぎて見ずらいのでいい感じにファイル分けを検討する
 - monkey 用の formatter とか作れたら良さそう。テストもはかどるかも。
