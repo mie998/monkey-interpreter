@@ -123,6 +123,41 @@ func TestStringConcatenation(t *testing.T) {
 	}
 }
 
+func TestEvalStringLogicalExpression(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected bool
+	}{
+		{`"a" < "b"`, true},
+		{`"a" > "b"`, false},
+		{`"a" == "b"`, false},
+		{`"a" != "b"`, true},
+		{`"a" < "a"`, false},
+		{`"a" > "a"`, false},
+		{`"a" == "a"`, true},
+		{`"a" != "a"`, false},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testStringObject(t, evaluated, tt.expected)
+	}
+}
+
+func testStringObject(t *testing.T, obj object.Object, expected bool) bool {
+	result, ok := obj.(*object.Boolean)
+	if !ok {
+		t.Errorf("Evaluated object is not Boolean. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
+		return false
+	}
+
+	return true
+}
+
 func TestBangOperator(t *testing.T) {
 	tests := []struct {
 		input    string
