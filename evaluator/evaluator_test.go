@@ -7,6 +7,15 @@ import (
 	"testing"
 )
 
+func testEval(input string) object.Object {
+	l := lexer.New(input)
+	p := parser.New(l)
+	program := p.ParseProgram()
+	env := object.NewEnvironment()
+
+	return Eval(program, env)
+}
+
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -27,15 +36,6 @@ func TestEvalIntegerExpression(t *testing.T) {
 		evaluated := testEval(tt.input)
 		testIntegerObject(t, evaluated, tt.expected)
 	}
-}
-
-func testEval(input string) object.Object {
-	l := lexer.New(input)
-	p := parser.New(l)
-	program := p.ParseProgram()
-	env := object.NewEnvironment()
-
-	return Eval(program, env)
 }
 
 func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
@@ -91,6 +91,21 @@ func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
 	}
 
 	return true
+}
+
+func TestStringLiteral(t *testing.T) {
+	input := `"Hello, World!"`
+	evaluated := testEval(input)
+	estimated := "Hello, World!"
+	str, ok := evaluated.(*object.String)
+
+	if !ok {
+		t.Fatalf("obejct is not String. got=%T (%+v)", evaluated, evaluated)
+	}
+
+	if str.Value != estimated {
+		t.Errorf("String has wrong value. got=%q, estimated=%q", str.Value, estimated)
+	}
 }
 
 func TestBangOperator(t *testing.T) {
