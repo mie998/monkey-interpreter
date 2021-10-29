@@ -36,6 +36,23 @@ func Modify(n Node, f ModifierFunc) Node {
 		if node.Value != nil {
 			node.Value, _ = Modify(node.Value, f).(Expression)
 		}
+	case *FunctionLiteral:
+		for i := range node.Parameters {
+			node.Parameters[i], _ = Modify(node.Parameters[i], f).(*Identifier)
+		}
+		node.Body, _ = Modify(node.Body, f).(*BlockStatement)
+	case *ArrayLiteral:
+		for i, element := range node.Elements {
+			node.Elements[i], _ = Modify(element, f).(Expression)
+		}
+	case *HashLiteral:
+		newPairs := make(map[Expression]Expression)
+		for key, value := range node.Pairs {
+			key, _ = Modify(key, f).(Expression)
+			value, _ = Modify(value, f).(Expression)
+			newPairs[key] = value
+		}
+		node.Pairs = newPairs
 	}
 
 	return f(n)

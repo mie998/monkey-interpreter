@@ -22,6 +22,15 @@ func TestModify(t *testing.T) {
 		return integer
 	}
 
+	hashLiteral := &HashLiteral{
+		Pairs: map[Expression]Expression{
+			one(): one(),
+			one(): one(),
+		},
+	}
+
+	Modify(hashLiteral, turnOneIntoTwo)
+
 	tests := []struct {
 		input     Node
 		exprected Node
@@ -105,6 +114,32 @@ func TestModify(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			&FunctionLiteral{
+				Parameters: []*Identifier{},
+				Body: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{
+							Expression: one(),
+						},
+					},
+				},
+			},
+			&FunctionLiteral{
+				Parameters: []*Identifier{},
+				Body: &BlockStatement{
+					Statements: []Statement{
+						&ExpressionStatement{
+							Expression: two(),
+						},
+					},
+				},
+			},
+		},
+		{
+			&ArrayLiteral{Elements: []Expression{one(), one()}},
+			&ArrayLiteral{Elements: []Expression{two(), two()}},
 		},
 	}
 
