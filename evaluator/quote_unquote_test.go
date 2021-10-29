@@ -63,6 +63,30 @@ func TestQuoteUnquote(t *testing.T) {
 			`quote(unquote(4 + 4) + 8)`,
 			`(8 + 8)`,
 		},
+		{
+			`let foobar = 8; quote(foobar)`,
+			`foobar`,
+		},
+		{
+			`let foobar = 8; quote(unquote(foobar))`,
+			`8`,
+		},
+		{
+			`quote(unquote(true))`,
+			`true`,
+		},
+		{
+			`quote(unquote(true == false))`,
+			`false`,
+		},
+		{
+			`quote(unquote(quote(1 + 1)))`,
+			`(1 + 1)`,
+		},
+		{
+			`let quotedInfixExpression = quote(1 + 1); quote(unquote(1 + 1) + unquote(quotedInfixExpression))`,
+			`(2 + (1 + 1))`,
+		},
 	}
 
 	for _, tt := range tests {
