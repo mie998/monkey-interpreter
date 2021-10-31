@@ -41,3 +41,4 @@ Go言語で作るインタプリタ 実装
 - github actions で自動テスト
 - convertObjectToASTNode にいろいろ追記する(p265)
 - p265 の A.4.2.3 の注意点について議論する
+- 最終章のmacroについて考えてみる.
