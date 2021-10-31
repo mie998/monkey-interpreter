@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"fmt"
 	"monkey/ast"
 	"monkey/lexer"
 	"monkey/object"
@@ -9,17 +10,16 @@ import (
 )
 
 func TestDefineMacros(t *testing.T) {
-	input := `
-	let number = 1;
-	let function = fn(x, y) { x + y; };
-	let mymacro = macro(x, y) { x + y; };
-	`
+	input := `let number = 1; let function = fn(x, y) { x + y; }; let mymacro = macro(x, y) { x + y; };`
 
 	env := object.NewEnvironment()
 	program := testParseProgram(input)
 
 	DefineMacros(program, env)
 
+	for _, stmt := range program.Statements {
+		fmt.Println(stmt.String())
+	}
 	if len(program.Statements) != 2 {
 		t.Fatalf("Wrong number of statements. got=%d", len(program.Statements))
 	}
@@ -67,4 +67,54 @@ func testParseProgram(input string) *ast.Program {
 	l := lexer.New(input)
 	p := parser.New(l)
 	return p.ParseProgram()
+}
+
+func TestExpandMacros(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{
+			`
+				let infixExpression = macro() { quote(1 + 2); };
+				infixExpression();
+			`,
+			`(1 + 2)`,
+		},
+		{
+			`
+				let reverse = macro(a, b) { quote(unquote(b) - unquote(a)); };
+				reverse(2 + 2, 10 - 5);
+			`,
+			`(10 - 5) - (2 + 2)`,
+		},
+		{
+			`
+				let unless = macro(condition, consequence, alternative) {
+					quote(if (!(unquote(condition))) {
+						unquote(consequence);
+					} else {
+						unquote(alternative);
+					});
+				};
+
+				unless(10 > 5, puts("not greater"), puts("greater"));
+			`,
+			`if (!(10 > 5)) { puts("not greater") } else { puts("greater") }`,
+		},
+	}
+
+	for _, tt := range tests {
+		expected := testParseProgram(tt.expected)
+		program := testParseProgram(tt.input)
+
+		env := object.NewEnvironment()
+		DefineMacros(program, env)
+		expanded := ExpandMacros(program, env)
+
+		if program.String() != expected.String() {
+			t.Errorf("not equal. want=%q, got=%q",
+				expected.String(), expanded.String())
+		}
+	}
 }

@@ -999,6 +999,9 @@ func TestMacroLiteralParsing(t *testing.T) {
 	l := lexer.New(input)
 	p := New(l)
 	program := p.ParseProgram()
+	for _, stmt := range program.Statements {
+		fmt.Println(stmt.String())
+	}
 	checkParserErrors(t, p)
 
 	if len(program.Statements) != 1 {
