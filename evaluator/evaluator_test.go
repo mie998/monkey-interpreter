@@ -4,6 +4,7 @@ import (
 	"monkey/lexer"
 	"monkey/object"
 	"monkey/parser"
+	"reflect"
 	"testing"
 )
 
@@ -16,6 +17,41 @@ func testEval(input string) object.Object {
 	return Eval(program, env)
 }
 
+func testIntegerObject(t *testing.T, idx int, obj object.Object, expected int64) bool {
+	result, ok := obj.(*object.Integer)
+	if !ok {
+		t.Errorf("testcase:%v, object is not Integer. got=%T (%+v)", idx, obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("testcase:%v, object has wrong value. got=%d, want=%d", idx, result.Value, expected)
+		return false
+	}
+
+	return true
+}
+
+func testStringObject(t *testing.T, idx int, obj object.Object, expected string) bool {
+	result, ok := obj.(*object.String)
+	if !ok {
+		t.Errorf("testcase:%v, Evaluated object is not String. got=%T (%+v)", idx, obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("testcase:%v, object has wrong value. got=%s, want=%s", idx, result.Value, expected)
+		return false
+	}
+
+	return true
+}
+
+func testNullObject(t *testing.T, idx int, obj object.Object) bool {
+	if obj != NULL {
+		t.Errorf("testcase:%v, object is not NULL. got=%T (%+v)", idx, obj, obj)
+		return false
+	}
+	return true
+}
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -32,24 +68,10 @@ func TestEvalIntegerExpression(t *testing.T) {
 		{"1 + 4 / 2 - 1", 2},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
-		testIntegerObject(t, evaluated, tt.expected)
+		testIntegerObject(t, i, evaluated, tt.expected)
 	}
-}
-
-func testIntegerObject(t *testing.T, obj object.Object, expected int64) bool {
-	result, ok := obj.(*object.Integer)
-	if !ok {
-		t.Errorf("object is not Integer. got=%T (%+v)", obj, obj)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf("object has wrong value. got=%d, want=%d", result.Value, expected)
-		return false
-	}
-
-	return true
 }
 
 func TestEvalBooleanExpression(t *testing.T) {
@@ -140,22 +162,8 @@ func TestEvalStringLogicalExpression(t *testing.T) {
 
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
-		testStringObject(t, evaluated, tt.expected)
+		testBooleanObject(t, evaluated, tt.expected)
 	}
-}
-
-func testStringObject(t *testing.T, obj object.Object, expected bool) bool {
-	result, ok := obj.(*object.Boolean)
-	if !ok {
-		t.Errorf("Evaluated object is not Boolean. got=%T (%+v)", obj, obj)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
-		return false
-	}
-
-	return true
 }
 
 func TestBangOperator(t *testing.T) {
@@ -190,23 +198,15 @@ func TestIfElseExpressions(t *testing.T) {
 		{"if (2 > 1) { if (2 > 1) { return 10; } return 1; }", 10},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
 		integer, ok := tt.expected.(int)
 		if ok {
-			testIntegerObject(t, evaluated, int64(integer))
+			testIntegerObject(t, i, evaluated, int64(integer))
 		} else {
-			testNullObject(t, evaluated)
+			testNullObject(t, i, evaluated)
 		}
 	}
-}
-
-func testNullObject(t *testing.T, obj object.Object) bool {
-	if obj != NULL {
-		t.Errorf("object is not NULL. got=%T (%+v)", obj, obj)
-		return false
-	}
-	return true
 }
 
 func TestReturnStatements(t *testing.T) {
@@ -220,9 +220,9 @@ func TestReturnStatements(t *testing.T) {
 		{"0; return 10; 0;", 10},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
-		testIntegerObject(t, evaluated, tt.expected)
+		testIntegerObject(t, i, evaluated, tt.expected)
 	}
 }
 
@@ -267,8 +267,8 @@ func TestLetStatements(t *testing.T) {
 		{"let a = 5; let b = a; let c = a + b + 5; c;", 15},
 	}
 
-	for _, tt := range tests {
-		testIntegerObject(t, testEval(tt.input), tt.expected)
+	for i, tt := range tests {
+		testIntegerObject(t, i, testEval(tt.input), tt.expected)
 	}
 }
 
@@ -310,8 +310,8 @@ func TestFunctionApplication(t *testing.T) {
 		{"fn(x) { x; }(5)", 5},
 	}
 
-	for _, tt := range tests {
-		testIntegerObject(t, testEval(tt.input), tt.expected)
+	for i, tt := range tests {
+		testIntegerObject(t, i, testEval(tt.input), tt.expected)
 	}
 }
 
@@ -329,7 +329,7 @@ let ourFunction = fn(first) {
 
 ourFunction(20) + first + second;`
 
-	testIntegerObject(t, testEval(input), 70)
+	testIntegerObject(t, 0, testEval(input), 70)
 }
 
 func TestClosures(t *testing.T) {
@@ -341,7 +341,7 @@ let newAdder = fn(x) {
 let addTwo = newAdder(2);
 addTwo(2);`
 
-	testIntegerObject(t, testEval(input), 4)
+	testIntegerObject(t, 0, testEval(input), 4)
 }
 
 func TestBuildinFunctions(t *testing.T) {
@@ -351,38 +351,45 @@ func TestBuildinFunctions(t *testing.T) {
 	}{
 		{`len("unchi")`, 5},
 		{`len("")`, 0},
-		{`len(1)`, "argument to `len` not supported, got INTEGER"},
-		{`len("one", "two")`, "wrong number of arguments. got=2, want=1"},
+		{`len(1)`, object.Error{Message: "argument to `len` not supported, got INTEGER"}},
+		{`len("one", "two")`, object.Error{Message: "wrong number of arguments. got=2, want=1"}},
 		{`len([1,2,3])`, 3},
 		{`len([])`, 0},
-		// {`first("one")`, "o"},
-		// {`first("")`, ""},
+		{`first("one")`, "o"},
+		{`first("")`, nil},
 		{`first([0,1,2])`, 0},
 		{`first([])`, nil},
-		// {`last("one")`, "o"},
-		// {`last("")`, ""},
+		{`last("one")`, "e"},
+		{`last("")`, nil},
 		{`last([0,1,2])`, 2},
 		{`last([])`, nil},
-		// {`rest("one")`, "ne"},
-		// {`rest("")`, nil},
+		{`rest("one")`, "ne"},
+		{`rest("")`, nil},
 		{`rest([0,1,2])`, [2]int{1, 2}},
 		{`rest([])`, nil},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
-
-		switch expected := tt.expected.(type) {
-		case int:
-			testIntegerObject(t, evaluated, int64(expected))
-		case string:
+		if tt.expected == nil && testNullObject(t, i, evaluated) {
+			return
+		}
+		v := reflect.ValueOf(tt.expected)
+		switch v.Kind() {
+		case reflect.Int:
+			testIntegerObject(t, i, evaluated, int64(tt.expected.(int)))
+		case reflect.String:
+			testStringObject(t, i, evaluated, string(tt.expected.(string)))
+		case reflect.Array:
+			print("unchi")
+		default:
 			errObj, ok := evaluated.(*object.Error)
 			if !ok {
-				t.Errorf("object is not Error. got=%T (%+v)", evaluated, evaluated)
+				t.Errorf("testcase:%v, object is not Error. got=%T (%+v)", i, evaluated, evaluated)
 				continue
 			}
-			if errObj.Message != expected {
-				t.Errorf("wrong error message. expected=%q, got=%q", expected, errObj.Message)
+			if reflect.DeepEqual(tt.expected, errObj) {
+				t.Errorf("testcase:%v, wrong error message. expected=%q, got=%q", i, tt.expected, errObj)
 			}
 		}
 	}
@@ -401,9 +408,9 @@ func TestArrayLiterals(t *testing.T) {
 		t.Fatalf("array has wrong num of elements. got=%d", len(result.Elements))
 	}
 
-	testIntegerObject(t, result.Elements[0], 1)
-	testIntegerObject(t, result.Elements[1], 4)
-	testIntegerObject(t, result.Elements[2], 6)
+	testIntegerObject(t, 0, result.Elements[0], 1)
+	testIntegerObject(t, 0, result.Elements[1], 4)
+	testIntegerObject(t, 0, result.Elements[2], 6)
 }
 
 func TestArrayIndexExpressions(t *testing.T) {
@@ -453,13 +460,13 @@ func TestArrayIndexExpressions(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
 		integer, ok := tt.expected.(int)
 		if ok {
-			testIntegerObject(t, evaluated, int64(integer))
+			testIntegerObject(t, i, evaluated, int64(integer))
 		} else {
-			testNullObject(t, evaluated)
+			testNullObject(t, i, evaluated)
 		}
 	}
 }
@@ -500,7 +507,7 @@ func TestHashLiterals(t *testing.T) {
 			t.Errorf("no pair for given key in Pairs")
 		}
 
-		testIntegerObject(t, pair.Value, expectedValue)
+		testIntegerObject(t, int(expectedValue), pair.Value, expectedValue)
 	}
 }
 
@@ -539,13 +546,13 @@ func TestHashIndexExpressions(t *testing.T) {
 		},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
 		integer, ok := tt.expected.(int)
 		if ok {
-			testIntegerObject(t, evaluated, int64(integer))
+			testIntegerObject(t, i, evaluated, int64(integer))
 		} else {
-			testNullObject(t, evaluated)
+			testNullObject(t, i, evaluated)
 		}
 	}
 }

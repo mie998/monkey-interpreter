@@ -30,17 +30,22 @@ var builtins = map[string]*object.Builtin{
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
 			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `first` must be ARRAY, got %s",
+
+			switch arg := args[0].(type) {
+			case *object.String:
+				if len(arg.Value) > 0 {
+					return &object.String{Value: arg.Value[0:1]}
+				}
+				return NULL
+			case *object.Array:
+				if len(arg.Elements) > 0 {
+					return arg.Elements[0]
+				}
+				return NULL
+			default:
+				return newError("argument to `first` must be STRING or ARRAY, got %s",
 					args[0].Type())
 			}
-
-			arr := args[0].(*object.Array)
-			if len(arr.Elements) > 0 {
-				return arr.Elements[0]
-			}
-
-			return NULL
 		},
 	},
 	"last": {
@@ -49,17 +54,22 @@ var builtins = map[string]*object.Builtin{
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
 			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `first` must be ARRAY, got %s",
+
+			switch arg := args[0].(type) {
+			case *object.String:
+				if len(arg.Value) > 0 {
+					return &object.String{Value: string(arg.Value[len(arg.Value)-1])}
+				}
+				return NULL
+			case *object.Array:
+				if len(arg.Elements) > 0 {
+					return arg.Elements[len(arg.Elements)-1]
+				}
+				return NULL
+			default:
+				return newError("argument to `last` must be STRING or ARRAY, got %s",
 					args[0].Type())
 			}
-
-			arr := args[0].(*object.Array)
-			if len(arr.Elements) > 0 {
-				return arr.Elements[len(arr.Elements)-1]
-			}
-
-			return NULL
 		},
 	},
 	"rest": {
@@ -68,19 +78,22 @@ var builtins = map[string]*object.Builtin{
 				return newError("wrong number of arguments. got=%d, want=1",
 					len(args))
 			}
-			if args[0].Type() != object.ARRAY_OBJ {
-				return newError("argument to `first` must be ARRAY, got %s",
+
+			switch arg := args[0].(type) {
+			case *object.String:
+				if len(arg.Value) > 0 {
+					return &object.String{Value: arg.Value[1:]}
+				}
+				return NULL
+			case *object.Array:
+				if len(arg.Elements) > 0 {
+					return &object.Array{Elements: arg.Elements[1:]}
+				}
+				return NULL
+			default:
+				return newError("argument to `rest` must be STRING or ARRAY, got %s",
 					args[0].Type())
 			}
-
-			arr := args[0].(*object.Array)
-			if len(arr.Elements) > 0 {
-				newElements := make([]object.Object, len(arr.Elements)-1, len(arr.Elements)-1)
-				copy(newElements, arr.Elements[1:])
-				return &object.Array{Elements: newElements}
-			}
-
-			return NULL
 		},
 	},
 	"push": {
@@ -97,7 +110,7 @@ var builtins = map[string]*object.Builtin{
 			arr := args[0].(*object.Array)
 			length := len(arr.Elements)
 
-			newElements := make([]object.Object, length+1, length+1)
+			newElements := make([]object.Object, length+1)
 			copy(newElements, arr.Elements)
 			newElements[length] = args[1]
 
