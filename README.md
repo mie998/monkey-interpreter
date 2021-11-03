@@ -26,6 +26,7 @@ Go言語で作るインタプリタ 実装
   [ ]       expected next token to be =, got INT instead
   [ ]       no prefix parse function for = found` これは `let newAdder = fn(x) { fn(y) {x + y }};` みたいにすればいいかも。要検討
 - [ ] repl で補完が効かないのが気に食わないので補完機能を追加する。
+  - https://cs.opensource.google/go/x/crypto/+/089bfa56:ssh/terminal/terminal.go が結構参考にできるかも？s
 - [ ] loop なくない？        
 - [ ] GC を使い回しているらしいので GO の GC について理解するのは礼儀でしょうか。
 - [ ] Go に存在しないデータ型を定義する。(Enum とか)
