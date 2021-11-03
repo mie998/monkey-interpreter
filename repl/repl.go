@@ -2,12 +2,14 @@ package repl
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"monkey/evaluator"
 	"monkey/lexer"
 	"monkey/object"
 	"monkey/parser"
+	"strings"
+
+	"github.com/fatih/color"
 )
 
 const PROMPT = ">> "
@@ -17,7 +19,7 @@ func Start(in io.Reader, out io.Writer) {
 	env := object.NewEnvironment()
 
 	for {
-		fmt.Print(PROMPT)
+		color.New(color.FgGreen).Fprint(out, PROMPT)
 		scanned := scanner.Scan()
 		if !scanned {
 			return
@@ -36,8 +38,11 @@ func Start(in io.Reader, out io.Writer) {
 		expanded := evaluator.ExpandMacros(program, env)
 		evaluated := evaluator.Eval(expanded, env)
 		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+			if strings.HasPrefix(evaluated.Inspect(), "ERROR") {
+				color.New(color.FgRed).Fprintln(out, evaluated.Inspect())
+			} else {
+				color.New(color.FgBlue).Fprintln(out, evaluated.Inspect())
+			}
 		}
 	}
 }
