@@ -45,6 +45,20 @@ func testStringObject(t *testing.T, idx int, obj object.Object, expected string)
 	return true
 }
 
+func testBooleanObject(t *testing.T, idx int, obj object.Object, expected bool) bool {
+	result, ok := obj.(*object.Boolean)
+	if !ok {
+		t.Errorf("object is not Boolean. got=%T (%+v)", obj, obj)
+		return false
+	}
+	if result.Value != expected {
+		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
+		return false
+	}
+
+	return true
+}
+
 func testNullObject(t *testing.T, idx int, obj object.Object) bool {
 	if obj != NULL {
 		t.Errorf("testcase:%v, object is not NULL. got=%T (%+v)", idx, obj, obj)
@@ -52,6 +66,37 @@ func testNullObject(t *testing.T, idx int, obj object.Object) bool {
 	}
 	return true
 }
+
+func testArrayObject(t *testing.T, idx int, obj object.Object, expected []interface{}) bool {
+	result, ok := obj.(*object.Array)
+	if !ok {
+		t.Errorf("testcase:%v, Evaluated object is not String. got=%T (%+v)", idx, obj, obj)
+		return false
+	}
+	if len(result.Elements) != len(expected) {
+		t.Errorf("testcase:%v, Evaluated object length isn't equal. got=%v (%v)", idx, len(result.Elements), len(expected))
+		return false
+	}
+	for i, elem := range expected {
+		v := reflect.ValueOf(elem)
+		switch v.Kind() {
+		case reflect.Int:
+			testIntegerObject(t, i, result.Elements[i], elem.(int64))
+		case reflect.String:
+			testStringObject(t, i, result.Elements[i], elem.(string))
+		case reflect.Bool:
+			testBooleanObject(t, i, result.Elements[i], elem.(bool))
+		case reflect.Array:
+			testArrayObject(t, i, result.Elements[i], elem.([]interface{}))
+		default:
+			t.Errorf("testcase:%v, this valiable type is not suppoerted. got=%v (%+v)", idx, result.Elements[i], result.Elements[i])
+			return false
+		}
+	}
+
+	return true
+}
+
 func TestEvalIntegerExpression(t *testing.T) {
 	tests := []struct {
 		input    string
@@ -95,24 +140,10 @@ func TestEvalBooleanExpression(t *testing.T) {
 		{"true != false", true},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
-		testBooleanObject(t, evaluated, tt.expected)
+		testBooleanObject(t, i, evaluated, tt.expected)
 	}
-}
-
-func testBooleanObject(t *testing.T, obj object.Object, expected bool) bool {
-	result, ok := obj.(*object.Boolean)
-	if !ok {
-		t.Errorf("object is not Boolean. got=%T (%+v)", obj, obj)
-		return false
-	}
-	if result.Value != expected {
-		t.Errorf("object has wrong value. got=%t, want=%t", result.Value, expected)
-		return false
-	}
-
-	return true
 }
 
 func TestStringLiteral(t *testing.T) {
@@ -160,9 +191,9 @@ func TestEvalStringLogicalExpression(t *testing.T) {
 		{`"a" != "a"`, false},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
-		testBooleanObject(t, evaluated, tt.expected)
+		testBooleanObject(t, i, evaluated, tt.expected)
 	}
 }
 
@@ -179,9 +210,9 @@ func TestBangOperator(t *testing.T) {
 		{"!!5", true},
 	}
 
-	for _, tt := range tests {
+	for i, tt := range tests {
 		evaluated := testEval(tt.input)
-		testBooleanObject(t, evaluated, tt.expected)
+		testBooleanObject(t, i, evaluated, tt.expected)
 	}
 }
 
@@ -381,7 +412,7 @@ func TestBuildinFunctions(t *testing.T) {
 		case reflect.String:
 			testStringObject(t, i, evaluated, string(tt.expected.(string)))
 		case reflect.Array:
-			print("unchi")
+			testArrayObject(t, i, evaluated, tt.expected.([]interface{}))
 		default:
 			errObj, ok := evaluated.(*object.Error)
 			if !ok {
